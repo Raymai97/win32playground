@@ -1,0 +1,53 @@
+# depslib dependency file v1.0
+1469077469 source:c:\users\raymai\desktop\blackjack_c\genlist.c
+	"GenList.h"
+
+1469077344 c:\users\raymai\desktop\blackjack_c\genlist.h
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+
+1469026602 source:c:\users\raymai\desktop\blackjack_c\main.c
+	<Windows.h>
+	<WindowsX.h>
+	<tchar.h>
+	<time.h>
+	"GenList.h"
+
+1469075602 source:c:\users\raymai\desktop\blackjack_c\program.c
+	<Windows.h>
+	<WindowsX.h>
+	<tchar.h>
+	<time.h>
+	"GenList.h"
+	"DpiAware.h"
+
+1469075411 source:c:\users\raymai\desktop\blackjack_c\dpiaware.c
+	"DpiAware.h"
+
+1469071789 c:\users\raymai\desktop\blackjack_c\dpiaware.h
+	<windows.h>
+
+1469336962 source:d:\programming\c n c++\blackjack_c\dpiaware.c
+	"DpiAware.h"
+
+1469071789 d:\programming\c n c++\blackjack_c\dpiaware.h
+	<windows.h>
+
+1469078624 source:d:\programming\c n c++\blackjack_c\genlist.c
+	"GenList.h"
+
+1469077344 d:\programming\c n c++\blackjack_c\genlist.h
+	<stdlib.h>
+	<string.h>
+	<stdbool.h>
+
+1469337007 source:d:\programming\c n c++\blackjack_c\program.c
+	<Windows.h>
+	<WindowsX.h>
+	<stdio.h>
+	<tchar.h>
+	<time.h>
+	"GenList.h"
+	"DpiAware.h"
+

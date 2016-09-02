@@ -1,0 +1,16 @@
+# depslib dependency file v1.0
+1467195894 source:c:\users\raymai\desktop\enabler\main.c
+	<conio.h>
+	<stdio.h>
+	<stdlib.h>
+	<windows.h>
+	<stdbool.h>
+
+1467202316 source:d:\programming\c n c++\enabler\main.c
+	<conio.h>
+	<stdio.h>
+	<stdlib.h>
+	<windows.h>
+	<tchar.h>
+	<stdbool.h>
+

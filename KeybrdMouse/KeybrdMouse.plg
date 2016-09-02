@@ -1,0 +1,30 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: KeybrdMouse - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\Users\Raymai\AppData\Local\Temp\RSPAFBE.tmp" with contents
+[
+/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FR"Release/" /Fp"Release/KeybrdMouse.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\Users\Raymai\Documents\_ Apps\VC6 with SP6\MyProjects\KeybrdMouse\Program.c"
+]
+Creating command line "cl.exe @C:\Users\Raymai\AppData\Local\Temp\RSPAFBE.tmp" 
+Creating command line "link.exe msvcrt.lib kernel32.lib user32.lib shell32.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/KeybrdMouse.pdb" /machine:I386 /out:"Release/KeybrdMouse.exe" /opt:nowin98  ".\Release\Program.obj" "
+<h3>Output Window</h3>
+Compiling...
+Program.c
+Linking...
+Creating command line "bscmake.exe /nologo /o"Release/KeybrdMouse.bsc"  ".\Release\Program.sbr""
+Creating browse info file...
+<h3>Output Window</h3>
+
+
+
+<h3>Results</h3>
+KeybrdMouse.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: temClock - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Release/res.res" /d "NDEBUG" "C:\Documents and Settings\Administrator\Desktop\temClock\res.rc"" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP29.tmp" with contents
+[
+/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FR"Release/" /Fp"Release/temClock.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\Documents and Settings\Administrator\Desktop\temClock\MaiTimer.cpp"
+"C:\Documents and Settings\Administrator\Desktop\temClock\Program.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP29.tmp" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP2A.tmp" with contents
+[
+msvcrt.lib kernel32.lib user32.lib gdi32.lib winmm.lib comdlg32.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/temClock.pdb" /machine:I386 /nodefaultlib /out:"Release/temClock.exe" /opt:nowin98 
+".\Release\MaiTimer.obj"
+".\Release\Program.obj"
+".\Release\res.res"
+]
+Creating command line "link.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP2A.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+MaiTimer.cpp
+Program.cpp
+Linking...
+Creating command line "bscmake.exe /nologo /o"Release/temClock.bsc"  ".\Release\MaiTimer.sbr" ".\Release\Program.sbr""
+Creating browse info file...
+<h3>Output Window</h3>
+
+
+
+<h3>Results</h3>
+temClock.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>
