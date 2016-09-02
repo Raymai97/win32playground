@@ -1,0 +1,29 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: Enabler - Win32 Release--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Release/res.res" /d "NDEBUG" "C:\MyProjects\Enabler\res.rc"" 
+Creating temporary file "C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP91.tmp" with contents
+[
+/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /Fp"Release/Enabler.pch" /YX /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\MyProjects\Enabler\Program.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\RSP91.tmp" 
+Creating command line "link.exe msvcrt.lib kernel32.lib user32.lib gdi32.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/Enabler.pdb" /machine:I386 /nodefaultlib /out:"Release/Enabler.exe" /opt:nowin98  .\Release\Program.obj .\Release\res.res "
+<h3>Output Window</h3>
+Compiling resources...
+Compiling...
+Program.cpp
+Linking...
+
+
+
+<h3>Results</h3>
+Enabler.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>
