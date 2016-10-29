@@ -51,3 +51,32 @@
 	"GenList.h"
 	"DpiAware.h"
 
+1477709126 source:d:\programming\win32playground\blackjack_c\bjack.c
+	"BJack.h"
+
+1477713687 d:\programming\win32playground\blackjack_c\bjack.h
+	"GenList.h"
+
+1477713449 d:\programming\win32playground\blackjack_c\genlist.h
+	<stdbool.h>
+	<stdlib.h>
+	<string.h>
+
+1477713463 source:d:\programming\win32playground\blackjack_c\genlist.c
+	"GenList.h"
+
+1477708963 source:d:\programming\win32playground\blackjack_c\mywin32.c
+	"MyWin32.h"
+
+1475897975 d:\programming\win32playground\blackjack_c\mywin32.h
+	<Windows.h>
+
+1477714661 source:d:\programming\win32playground\blackjack_c\program.c
+	<stdio.h>
+	<Windows.h>
+	<WindowsX.h>
+	<tchar.h>
+	"BJack.h"
+	"GenList.h"
+	"MyWin32.h"
+

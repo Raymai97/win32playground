@@ -32,18 +32,23 @@
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-std=gnu11" />
 		</Compiler>
 		<Linker>
 			<Add library="libgdi32.a" />
 		</Linker>
-		<Unit filename="DpiAware.c">
+		<Unit filename="BJack.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="DpiAware.h" />
+		<Unit filename="BJack.h" />
 		<Unit filename="GenList.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="GenList.h" />
+		<Unit filename="MyWin32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="MyWin32.h" />
 		<Unit filename="Program.c">
 			<Option compilerVar="CC" />
 		</Unit>

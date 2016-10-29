@@ -4,6 +4,9 @@
 *.sln.docstates
 *.sdf
 *.ncb
+*.o
+*.obj
+*.exe
 
 [Dd]ebug/
 [Dd]ebugPublic/

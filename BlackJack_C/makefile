@@ -5,9 +5,9 @@ LIBS= \
 	$(LIBPATH)libkernel32.a \
 	$(LIBPATH)libuser32.a \
 	$(LIBPATH)libgdi32.a
-OBJS=Program.o DpiAware.o GenList.o
+OBJS=Program.o GenList.o MyWin32.o BJack.o
 EXE_NAME=BlackJack.exe
-FLAGS=-mwindows -s
+FLAGS=-mwindows -s -std=gnu11
 
 BlackJack : $(OBJS)
 	$(CC) $(FLAGS) -o $(EXE_NAME) $(OBJS) $(LIBS)
@@ -15,11 +15,14 @@ BlackJack : $(OBJS)
 Program.o :
 	$(CC) -c Program.c
 
-DpiAware.o :
-	$(CC) -c DpiAware.c
-
 GenList.o :
 	$(CC) -c GenList.c
+
+MyWin32.o :
+	$(CC) -c MyWin32.c
+
+BJack.o :
+	$(CC) -c BJack.c
 
 .PHONY: clean
 clean :

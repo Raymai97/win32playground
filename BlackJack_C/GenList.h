@@ -1,11 +1,24 @@
-// GenList v2.0 written by Raymai97 on July 2016, C99 mode required
+// GenList v2.0a by Raymai97
 
 #ifndef _GENLIST_H
 #define _GENLIST_H
 
+#ifdef __cplusplus
+	#define _GENLIST_CAN_WORK
+#elif __STDC_VERSION__ >= 199901L
+	#define _GENLIST_CAN_WORK
+	#include <stdbool.h>
+#endif
+#ifndef _GENLIST_CAN_WORK
+#error "GenList requires C99 or C++ to work!"
+#else
+
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
+/* In case no bool:
+typedef int bool;
+#define false 0
+#define true 1 */
 
 typedef void* GENLIST;
 typedef void (*GENLIST_FOREACH_HANDLER)(int, void*);
@@ -39,4 +52,5 @@ int GenList_LastErr();
 
 /* ------------- Error message */
 
+#endif // _GENLIST_CAN_WORK
 #endif // _GENLIST_H

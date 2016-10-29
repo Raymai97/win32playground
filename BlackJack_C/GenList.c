@@ -19,7 +19,7 @@ size_t a;
 void ReallocAsNeeded(_GENLIST_ *lis) {
     if (lis->used >= lis->capacity) {
         lis->capacity += INITIAL_CAPACITY;
-        lis->data = realloc(lis->data, lis->capacity * lis->item_size);
+        lis->data = (void**)realloc(lis->data, lis->capacity * lis->item_size);
     }
 }
 
@@ -34,7 +34,7 @@ bool GenList_Create(GENLIST *list, size_t item_size, bool do_memcpy) {
         last_err = GENLIST_ERR_UNEXPECTED_NULL;
         return false;
     }
-    _GENLIST_ *lis = malloc(sizeof(_GENLIST_));
+    _GENLIST_ *lis = (_GENLIST_*)malloc(sizeof(_GENLIST_));
     lis->capacity = 0;
     lis->used = 0;
     lis->data = NULL;
@@ -66,7 +66,7 @@ bool GenList_Add(GENLIST list, void *item) {
     ReallocAsNeeded(lis);
     size_t i = lis->used;
     if (lis->do_memcpy) {
-        lis->data[i] = malloc(lis->item_size);
+        lis->data[i] = (void*)malloc(lis->item_size);
         memcpy(lis->data[i], item, lis->item_size);
     } else {
         lis->data[i] = item;
@@ -92,7 +92,7 @@ bool GenList_AddAt(GENLIST list, size_t i, void *item) {
         if (a == i) { break; }
     }
     if (lis->do_memcpy) {
-        lis->data[a] = malloc(lis->item_size);
+        lis->data[a] = (void*)malloc(lis->item_size);
         memcpy(lis->data[a], item, lis->item_size);
     } else {
         lis->data[a] = item;
