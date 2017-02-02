@@ -4,7 +4,7 @@
 
 # TARGTYPE "Win32 (x86) Application" 0x0101
 
-CFG=temClock - Win32 Debug
+CFG=temClock - Win32 Release
 !MESSAGE This is not a valid makefile. To build this project using NMAKE,
 !MESSAGE use the Export Makefile command and run
 !MESSAGE 
@@ -13,12 +13,12 @@ CFG=temClock - Win32 Debug
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f "temClock.mak" CFG="temClock - Win32 Debug"
+!MESSAGE NMAKE /f "temClock.mak" CFG="temClock - Win32 Release"
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
 !MESSAGE "temClock - Win32 Release" (based on "Win32 (x86) Application")
-!MESSAGE "temClock - Win32 Debug" (based on "Win32 (x86) Application")
+!MESSAGE "temClock - Win32 Release Win9x" (based on "Win32 (x86) Application")
 !MESSAGE 
 
 # Begin Project
@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FR /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "UNICODE" /D "_UNICODE" /FR /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -56,31 +56,33 @@ LINK32=link.exe
 # ADD LINK32 msvcrt.lib kernel32.lib user32.lib gdi32.lib winmm.lib comdlg32.lib /nologo /subsystem:windows /machine:I386 /nodefaultlib /opt:nowin98
 # SUBTRACT LINK32 /pdb:none
 
-!ELSEIF  "$(CFG)" == "temClock - Win32 Debug"
+!ELSEIF  "$(CFG)" == "temClock - Win32 Release Win9x"
 
 # PROP BASE Use_MFC 0
-# PROP BASE Use_Debug_Libraries 1
-# PROP BASE Output_Dir "Debug"
-# PROP BASE Intermediate_Dir "Debug"
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "temClock___Win32_Release_Win9x"
+# PROP BASE Intermediate_Dir "temClock___Win32_Release_Win9x"
+# PROP BASE Ignore_Export_Lib 0
 # PROP BASE Target_Dir ""
 # PROP Use_MFC 0
-# PROP Use_Debug_Libraries 1
-# PROP Output_Dir "Debug"
-# PROP Intermediate_Dir "Debug"
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "Release"
+# PROP Intermediate_Dir "Release"
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
-# ADD BASE CPP /nologo /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /YX /FD /GZ /c
-# ADD CPP /nologo /MDd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /FR /YX /FD /GZ /c
-# ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /win32
-# ADD MTL /nologo /D "_DEBUG" /mktyplib203 /win32
-# ADD BASE RSC /l 0x409 /d "_DEBUG"
-# ADD RSC /l 0x409 /d "_DEBUG"
+# ADD BASE CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "UNICODE" /D "_UNICODE" /FR /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /FR /YX /FD /c
+# ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+# ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
+# ADD BASE RSC /l 0x409 /d "NDEBUG"
+# ADD RSC /l 0x409 /d "NDEBUG"
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 msvcrt.lib kernel32.lib user32.lib gdi32.lib winmm.lib comdlg32.lib /nologo /subsystem:windows /debug /machine:I386 /nodefaultlib /pdbtype:sept /opt:nowin98
+# ADD BASE LINK32 msvcrt.lib kernel32.lib user32.lib gdi32.lib winmm.lib comdlg32.lib /nologo /subsystem:windows /machine:I386 /nodefaultlib /opt:nowin98
+# SUBTRACT BASE LINK32 /pdb:none
+# ADD LINK32 msvcrt.lib kernel32.lib user32.lib gdi32.lib winmm.lib comdlg32.lib /nologo /subsystem:windows /machine:I386 /nodefaultlib /out:"Release/temClock_9x.exe" /opt:nowin98
 # SUBTRACT LINK32 /pdb:none
 
 !ENDIF 
@@ -88,10 +90,14 @@ LINK32=link.exe
 # Begin Target
 
 # Name "temClock - Win32 Release"
-# Name "temClock - Win32 Debug"
+# Name "temClock - Win32 Release Win9x"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# Begin Source File
+
+SOURCE=.\DwmFrame.cpp
+# End Source File
 # Begin Source File
 
 SOURCE=.\MaiTimer.cpp
@@ -106,6 +112,10 @@ SOURCE=.\Program.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=.\DwmFrame.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\MaiTimer.h
 # End Source File
 # Begin Source File
@@ -118,7 +128,39 @@ SOURCE=.\resource.h
 # PROP Default_Filter "ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 # Begin Source File
 
+SOURCE=.\default1.bin
+# End Source File
+# Begin Source File
+
 SOURCE=.\res.rc
+# End Source File
+# End Group
+# Begin Group "MyWinAPI"
+
+# PROP Default_Filter ""
+# Begin Source File
+
+SOURCE=.\MyWinAPI\Create32bitBmp.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\MyWinAPI\Create32bitBmp.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\MyWinAPI\Dwm.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\MyWinAPI\Dwm.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\MyWinAPI\Uxtheme.c
+# End Source File
+# Begin Source File
+
+SOURCE=.\MyWinAPI\Uxtheme.h
 # End Source File
 # End Group
 # End Target

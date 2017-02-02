@@ -1,20 +1,27 @@
-#define UNICODE
-#define _UNICODE
 #include <stdio.h>
+#include <limits.h>
 #include <Windows.h>
 #include <tchar.h>
 #include <WindowsX.h>
 #include "MaiTimer.h"
+#include "DwmFrame.h"
+#include "MyWinAPI/Uxtheme.h"
+#include "MyWinAPI/Create32bitBmp.h"
 #include "resource.h"
+
+typedef int			i32_t;
+#define I32_MAX		INT_MAX
+#define I32_MIN		INT_MIN
 
 #define CLASS_NAME	_T("MaiSoft.temClock")
 #define WND_TITLE	_T("temClock")
 #define WND_STYLE	(WS_OVERLAPPEDWINDOW)
-#define WIDTH_OF(rc)  (rc.right-rc.left)
-#define HEIGHT_OF(rc) (rc.bottom-rc.top)
+#define WIDTH_OF(rc)  ((rc).right - (rc).left)
+#define HEIGHT_OF(rc) ((rc).bottom - (rc).top)
 #define INI_FILENAME	_T("temClock.ini")
 
 #define FORECOLOR		RGB(  0,  0,  0)
+#define STR_SIZE		(1024)
 
 int dpi_y;
 HINSTANCE hInst;
@@ -22,11 +29,13 @@ HWND hWnd;
 HFONT hFont, hFontSmall;
 LOGFONT lfFont, lfFontSmall;
 TCHAR *ontimeout_exec, *ontimeout_sound, *ini_filepath; // never NULL
+bool dwm_extend_frame;
 volatile bool timer_mode, stopw_mode;
-volatile DWORD timer_initial; // initial ms, before timer start
+volatile i32_t timer_initial; // initial ms, before timer start
 volatile UINT timer_id; // from SetTimer()
-volatile DWORD stopw_lap1, stopw_lap2, stopw_lap3;
+volatile i32_t stopw_lap1, stopw_lap2, stopw_lap3;
 MaiTimer timer, stopw;
+DwmFrame dwmf;
 
 volatile COLORREF bgcolor;
 struct OMO_STATE {
@@ -40,8 +49,8 @@ VOID CALLBACK AdvanceProc(HWND, UINT, UINT, DWORD);
 VOID CALLBACK OnTimerTimeout(HWND, UINT, UINT, DWORD);
 void OnPaint(HWND);
 void OnKey(HWND, UINT, BOOL, int, UINT);
-void OnLButtonUp(HWND, int, int, UINT);
 void OnRButtonUp(HWND, int, int, UINT);
+UINT OnNcHitTest(HWND hwnd, int x, int y);
 void stopw_StartPause();
 void stopw_Reset();
 void stopw_Lap();
@@ -49,11 +58,14 @@ void timer_StartPause();
 void timer_Reset();
 void timer_SetTimeout();
 void CenterParent(HWND, HWND);
-void MsToMulti(DWORD, DWORD*, DWORD*, DWORD*, DWORD*);
-void PrintElapsedTime(TCHAR*, DWORD, bool show_ms = true);
-bool TryParseTextbox(HWND, int, int*);
+void MsToMulti(i32_t, i32_t*, i32_t*, i32_t*, i32_t*);
+void PrintElapsedTime(TCHAR*, i32_t, bool show_ms = true);
+bool TryParseTextOf(HWND, int ctlId, i32_t*);
+bool TryAdd(i32_t, i32_t*);
+bool TryMultiply(i32_t, i32_t*);
 void ShowSettingsDlg();
 void LoadSaveIni(HWND, bool);
+void MyDrawText(HDC, LPTSTR, LPRECT, UINT);
 
 // Timespan dialog ...
 BOOL CALLBACK TimespanDlgProc(HWND, UINT, WPARAM, LPARAM);
@@ -123,6 +135,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE, LPTSTR lpCmdLine, int nCmdS
 		NULL, NULL,
 		NULL, NULL);
 	if (!hWnd) { return 2; }
+	dwmf.SetHwnd(hWnd);
 	ShowWindow(hWnd, nCmdShow);
 	{
 		SetTimer(NULL, 0, 0, UpdateUiProc);
@@ -142,8 +155,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM w, LPARAM l) {
 	case WM_ERASEBKGND: break;
 	case WM_PAINT: HANDLE_WM_PAINT(hWnd, w, l, OnPaint); break;
 	case WM_KEYDOWN: HANDLE_WM_KEYDOWN(hWnd, w, l, OnKey); break;
-	case WM_LBUTTONUP: HANDLE_WM_LBUTTONUP(hWnd, w, l, OnLButtonUp); break;
+	//case WM_LBUTTONUP: HANDLE_WM_LBUTTONUP(hWnd, w, l, OnLButtonUp); break;
+	case WM_NCRBUTTONUP:
 	case WM_RBUTTONUP: HANDLE_WM_RBUTTONUP(hWnd, w, l, OnRButtonUp); break;
+	case WM_DWMCOMPOSITIONCHANGED: dwmf.OnDwmCompositionChanged(); break;
+	case WM_NCHITTEST: return HANDLE_WM_NCHITTEST(hWnd, w, l, OnNcHitTest);
 	case WM_DESTROY: PostQuitMessage(0); break;
 	default: return DefWindowProc(hWnd, msg, w, l);
 	}
@@ -204,19 +220,22 @@ void OnPaint(HWND hWnd) {
 	PAINTSTRUCT ps;
 	HDC real_hdc = BeginPaint(hWnd, &ps);
 	HDC hdc = CreateCompatibleDC(real_hdc);
-	HBITMAP hbm = CreateCompatibleBitmap(real_hdc, WIDTH_OF(rc), HEIGHT_OF(rc));
+	HBITMAP hbm = dwmf.IsExtended() ?
+		Create32bitBmp(real_hdc, WIDTH_OF(rc), HEIGHT_OF(rc), NULL) :
+		CreateCompatibleBitmap(real_hdc, WIDTH_OF(rc), HEIGHT_OF(rc));
 	HGDIOBJ old_hbm = SelectObject(hdc, hbm);
 	HGDIOBJ old_hfo = SelectObject(hdc, hFont);
 	// Clear
-	HBRUSH hbrBg = CreateSolidBrush(bgcolor);
+	HBRUSH hbrBg = CreateSolidBrush(
+		dwmf.IsExtended() ? RGB(0,0,0) : bgcolor);
 	FillRect(hdc, &rc, hbrBg);
 	DeleteObject(hbrBg);
 	// Draw text
-	TCHAR str[1024] = {0};
+	TCHAR str[STR_SIZE] = {0};
 	SetTextColor(hdc, FORECOLOR);
 	SetBkMode(hdc, TRANSPARENT);
 	if (timer_mode) {
-		DWORD elapsed = timer.GetElapsedMs();
+		i32_t elapsed = timer.GetElapsedMs_i32();
 		_tcscpy(str, _T("~ Timer ~\n"));
 		PrintElapsedTime(&str[_tcslen(str)],
 			elapsed > timer_initial ? 0 :
@@ -224,7 +243,7 @@ void OnPaint(HWND hWnd) {
 	}
 	else if (stopw_mode) {
 		_tcscpy(str, _T("~ Stopwatch ~\n"));
-		PrintElapsedTime(&str[_tcslen(str)], stopw.GetElapsedMs());
+		PrintElapsedTime(&str[_tcslen(str)], stopw.GetElapsedMs_i32());
 		if (stopw_lap3) {
 			_tcscat(str, _T("\nLap 3: "));
 			PrintElapsedTime(&str[_tcslen(str)], stopw_lap3);
@@ -265,10 +284,10 @@ void OnPaint(HWND hWnd) {
 	// while .right and .bottom will be Width and Height.
 	// Thus, we need to += them after calculating x and y.
 	RECT rcText = {0};
-	DrawText(hdc, str, -1, &rcText, DT_CALCRECT);
+	MyDrawText(hdc, str, &rcText, DT_CALCRECT);
 	rcText.right += rcText.left = (WIDTH_OF(rc) - WIDTH_OF(rcText)) / 2;
 	rcText.bottom += rcText.top = (HEIGHT_OF(rc) - HEIGHT_OF(rcText)) / 2;
-	DrawText(hdc, &str[0], -1, &rcText, DT_CENTER);
+	MyDrawText(hdc, str, &rcText, DT_CENTER);
 	// If timer/stopwatch is running on background,
 	// show their status on 'Clock' screen.
 	if (!timer_mode && !stopw_mode) {
@@ -276,19 +295,19 @@ void OnPaint(HWND hWnd) {
 		if (stopw.IsRunning()) {
 			_tcscat(str, _T("Stopwatch: "));
 			PrintElapsedTime(&str[_tcslen(str)],
-				stopw.GetElapsedMs(), false);	
+				stopw.GetElapsedMs_i32(), false);	
 		}
 		if (timer.IsRunning()) {
 			if (*str) { _tcscat(str, _T("\n")); }
 			_tcscat(str, _T("Timer: "));
 			PrintElapsedTime(&str[_tcslen(str)],
-				timer_initial - timer.GetElapsedMs(), false);
+				timer_initial - timer.GetElapsedMs_i32(), false);
 		}
 		RECT rcTest, rcMini = {3, 3};
 		SelectObject(hdc, hFontSmall);
-		DrawText(hdc, str, -1, &rcMini, DT_CALCRECT);
+		MyDrawText(hdc, str, &rcMini, DT_CALCRECT);
 		if (!IntersectRect(&rcTest, &rcMini, &rcText)) {
-			DrawText(hdc, str, -1, &rcMini, 0);
+			MyDrawText(hdc, str, &rcMini, 0);
 		}
 	}
 	// Done
@@ -366,37 +385,34 @@ void OnKey(HWND hwnd, UINT vk, BOOL fDown, int cRepeat, UINT flags) {
 	}
 }
 
-void OnLButtonUp(HWND hWnd, int x, int y, UINT keyFlags) {
-	if (stopw_mode) { stopw_StartPause(); }
-	else if (timer_mode) { timer_StartPause(); }
-}
-
 void OnRButtonUp(HWND hWnd, int x, int y, UINT flags) {
 	POINT pt;
 	GetCursorPos(&pt);
 	HMENU hMenu = CreatePopupMenu();
 	if (stopw_mode) {
-		InsertMenu(hMenu, -1, MF_BYPOSITION, 1, _T("Lap"));
-		InsertMenu(hMenu, -1, MF_BYPOSITION, 2, _T("Reset"));
-		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-		InsertMenu(hMenu, -1, MF_BYPOSITION, 12, _T("Timer..."));
-		InsertMenu(hMenu, -1, MF_BYPOSITION, 10, _T("Clock..."));
+		AppendMenu(hMenu, MF_BYCOMMAND, 1, _T("Start/Pause"));
+		AppendMenu(hMenu, MF_BYCOMMAND, 2, _T("Lap"));
+		AppendMenu(hMenu, MF_BYCOMMAND, 3, _T("Reset"));
+		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+		AppendMenu(hMenu, MF_BYCOMMAND, 12, _T("Timer..."));
+		AppendMenu(hMenu, MF_BYCOMMAND, 10, _T("Clock..."));
 	}
 	else if (timer_mode) {
-		InsertMenu(hMenu, -1, MF_BYPOSITION, 1, _T("Set timeout..."));
-		InsertMenu(hMenu, -1, MF_BYPOSITION, 2, _T("Reset"));
-		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-		InsertMenu(hMenu, -1, MF_BYPOSITION, 11, _T("Stopwatch..."));
-		InsertMenu(hMenu, -1, MF_BYPOSITION, 10, _T("Clock..."));
+		AppendMenu(hMenu, MF_BYCOMMAND, 1, _T("Start/Pause"));
+		AppendMenu(hMenu, MF_BYCOMMAND, 2, _T("Set timeout..."));
+		AppendMenu(hMenu, MF_BYCOMMAND, 3, _T("Reset"));
+		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+		AppendMenu(hMenu, MF_BYCOMMAND, 11, _T("Stopwatch..."));
+		AppendMenu(hMenu, MF_BYCOMMAND, 10, _T("Clock..."));
 	}
 	else /* clock mode */ {
-		InsertMenu(hMenu, -1, MF_BYPOSITION, 11, _T("Stopwatch..."));
-		InsertMenu(hMenu, -1, MF_BYPOSITION, 12, _T("Timer..."));
+		AppendMenu(hMenu, MF_BYCOMMAND, 11, _T("Stopwatch..."));
+		AppendMenu(hMenu, MF_BYCOMMAND, 12, _T("Timer..."));
 	}
-	InsertMenu(hMenu, -1, MF_BYPOSITION | MF_SEPARATOR, 0, NULL);
-	InsertMenu(hMenu, -1, MF_BYPOSITION, 13, _T("Settings..."));
-	InsertMenu(hMenu, -1, MF_BYPOSITION | MF_GRAYED, 0, 
-		_T("temClock v1.0 by Raymai97"));
+	AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+	AppendMenu(hMenu, MF_BYCOMMAND, 13, _T("Settings..."));
+	AppendMenu(hMenu, MF_GRAYED, 0, 
+		_T("temClock v1.1 by Raymai97"));
 	int ret = TrackPopupMenu(
 		hMenu, TPM_RIGHTBUTTON | TPM_RETURNCMD, pt.x, pt.y, 0, hWnd, NULL);
 	DestroyMenu(hMenu);
@@ -405,13 +421,24 @@ void OnRButtonUp(HWND hWnd, int x, int y, UINT flags) {
 	else if (ret == 12) { stopw_mode = false; timer_mode = true; }
 	else if (ret == 13) { ShowSettingsDlg(); }
 	else if (stopw_mode) {
-		if (ret == 1) { stopw_Lap(); }
-		else if (ret == 2) { stopw_Reset(); }
+		if (ret == 1) { stopw_StartPause(); }
+		else if (ret == 2) { stopw_Lap(); }
+		else if (ret == 3) { stopw_Reset(); }
 	}
 	else if (timer_mode) {
-		if (ret == 1) { timer_SetTimeout(); }
-		else if (ret == 2) { timer_Reset(); }
+		if (ret == 1) { timer_StartPause(); }
+		else if (ret == 2) { timer_SetTimeout(); }
+		else if (ret == 3) { timer_Reset(); }
 	}	
+}
+
+UINT OnNcHitTest(HWND hwnd, int x, int y) {
+	POINT pt = {x, y};
+	ScreenToClient(hwnd, &pt);
+	RECT rc = {0};
+	GetClientRect(hwnd, &rc);
+	if (PtInRect(&rc, pt)) { return HTCAPTION; }
+	return FORWARD_WM_NCHITTEST(hwnd, x, y, DefWindowProc);
 }
 
 void stopw_StartPause() {
@@ -428,9 +455,9 @@ void stopw_Reset() {
 }
 
 void stopw_Lap() {
-	if (!stopw_lap1) { stopw_lap1 = stopw.GetElapsedMs(); }
-	else if (!stopw_lap2) { stopw_lap2 = stopw.GetElapsedMs(); }
-	else if (!stopw_lap3) { stopw_lap3 = stopw.GetElapsedMs(); }
+	if (!stopw_lap1) { stopw_lap1 = stopw.GetElapsedMs_i32(); }
+	else if (!stopw_lap2) { stopw_lap2 = stopw.GetElapsedMs_i32(); }
+	else if (!stopw_lap3) { stopw_lap3 = stopw.GetElapsedMs_i32(); }
 	else {
 		MessageBox(hWnd, _T("Maximum 3 laps only."), NULL,
 			MB_OK | MB_ICONERROR);
@@ -441,7 +468,7 @@ void timer_StartPause() {
 	if (timer.IsRunning()) {
 		if (timer.IsPaused()) {
 			timer_id = SetTimer(NULL, NULL,
-				timer_initial - timer.GetElapsedMs(), OnTimerTimeout);
+				timer_initial - timer.GetElapsedMs_i32(), OnTimerTimeout);
 			timer.Resume();
 		}
 		else {
@@ -490,7 +517,7 @@ void CenterParent(HWND hChild, HWND hParent) {
 		0, 0, SWP_NOSIZE);
 }
 
-void MsToMulti(DWORD total_ms, DWORD *h, DWORD *m, DWORD *s, DWORD *ms) {
+void MsToMulti(i32_t total_ms, i32_t *h, i32_t *m, i32_t *s, i32_t *ms) {
 	*ms = total_ms;
 	*h = *ms / 60 / 60 / 1000;
 	*ms -= (*h * 60 * 60 * 1000);
@@ -500,35 +527,55 @@ void MsToMulti(DWORD total_ms, DWORD *h, DWORD *m, DWORD *s, DWORD *ms) {
 	*ms -= (*s * 1000);
 }
 
-void PrintElapsedTime(TCHAR *str, DWORD total_ms, bool show_ms) {
-	DWORD h, m, s, ms;
+void PrintElapsedTime(TCHAR *str, i32_t total_ms, bool show_ms) {
+	if (total_ms < 0) {
+		_stprintf(str, _T("Overflow..."));
+		return;
+	}
+	i32_t h = 0, m = 0, s = 0, ms = 0;
 	MsToMulti(total_ms, &h, &m, &s, &ms);
 	if (show_ms) {
-		_stprintf(str,
-			_T("%.2lu:%.2lu:%.2lu.%.3lu"),
+		_stprintf(str, _T("%.2i:%.2i:%.2i.%.3i"),
 			h, m, s, ms);
 	}
 	else {
-		_stprintf(str,
-			_T("%.2lu:%.2lu:%.2lu"),
+		_stprintf(str, _T("%.2i:%.2i:%.2i"),
 			h, m, s);
 	}
 }
 
 // Behaves like .NET TryParse, but for user convenience,
 // it will assume 'zero-length input' as '0'.
-bool TryParseTextbox(HWND hDlg, int textbox_id, int *p_dest) {
-	HWND h = GetDlgItem(hDlg, textbox_id);
-	if (!h) { return false; }
-	int cch = GetWindowTextLength(h);
-	if (cch == 0) { *p_dest = 0; return true; }
-	// give up if contain anything other than 0~9
-	TCHAR *buf = new TCHAR[cch + 1];
-	cch = GetWindowText(h, buf, cch + 1);
-	for (int i = 0; i < cch; ++i) {
-		if (buf[i] < '0' || buf[i] > '9') { return false; }
+bool TryParseTextOf(HWND hDlg, int ctlId, i32_t *pDest) {
+	HWND h = GetDlgItem(hDlg, ctlId);
+	if (GetWindowTextLength(h) == 0) {
+		*pDest = 0;
+		return true;
 	}
-	*p_dest = _ttoi(buf);
+	TCHAR buf[20] = {0}, *pEnd = NULL;
+	GetWindowText(h, buf, 20);
+	i32_t ret = _tcstol(buf, &pEnd, 10);
+	if (pEnd && *pEnd) { return false; }
+	if (ret >= I32_MAX) { return false; }
+	*pDest = ret;
+	return true;
+}
+
+bool TryAdd(i32_t n, i32_t *p) {
+	if ((n > 0) && (*p > I32_MAX - n)) { return false; } // overflow
+	if ((n < 0) && (*p < I32_MIN - n)) { return false; } // underflow
+	*p += n;
+	return true;
+}
+
+bool TryMultiply(i32_t n, i32_t *p) {
+	if (*p > I32_MAX / n) { return false; } // overflow
+	if (*p < I32_MIN / n) { return false; } // underflow
+	// try think 8-bit signed,
+	// what would happen if -256 * -1
+	if ((*p == -1) && ( n == I32_MIN)) { return false; }
+	if (( n == -1) && (*p == I32_MIN)) { return false; }
+	*p *= n;
 	return true;
 }
 
@@ -544,12 +591,13 @@ void ShowSettingsDlg() {
 	else { // revert change
 		hFont = CreateFontIndirect(&lfFont);
 		hFontSmall = CreateFontIndirect(&lfFontSmall);
+		dwmf.DoExtend(dwm_extend_frame);
 	}
 }
 
 void LoadSaveIni(HWND hDlg, bool save) {
 	BOOL ok;
-	TCHAR szMsg[1024] = {0};
+	TCHAR szMsg[STR_SIZE] = {0};
 	if (save) {
 #ifdef _UNICODE
 		// If INI doesn't exist, we must manually create a blank
@@ -576,6 +624,10 @@ void LoadSaveIni(HWND hDlg, bool save) {
 			_T("TemClock"), _T("MiniFont"), &dlgSettings_lfFontSmall,
 			sizeof(LOGFONT), ini_filepath) &&
 		WritePrivateProfileString(
+			_T("TemClock"), _T("DwmExtendFrame"),
+			IsDlgButtonChecked(hDlg, CHK_DWM_EXTEND_FRAME)
+			? _T("1") : _T("0"), ini_filepath) &&
+		WritePrivateProfileString(
 			_T("OnTimeout"), _T("Execute"), szExec, ini_filepath) &&
 		WritePrivateProfileString(
 			_T("OnTimeout"), _T("Sound"), szSound, ini_filepath);
@@ -600,6 +652,11 @@ void LoadSaveIni(HWND hDlg, bool save) {
 			dlgSettings_lfFont = lf1;
 			dlgSettings_lfFontSmall = lf2;
 			// Error handling omitted (too tedious to do so)
+			TCHAR buf[MAX_PATH] = {0};
+			GetPrivateProfileString(
+				_T("TemClock"), _T("DwmExtendFrame"), _T(""),
+				buf, MAX_PATH, ini_filepath);
+			dwm_extend_frame = (_tcscmp(buf, _T("1")) == 0);
 			GetPrivateProfileString(
 				_T("OnTimeout"), _T("Execute"), _T(""),
 				ontimeout_exec, MAX_PATH, ini_filepath);
@@ -628,6 +685,25 @@ void LoadSaveIni(HWND hDlg, bool save) {
 		MB_OK | ok ? MB_ICONINFORMATION : MB_ICONERROR);
 }
 
+void MyDrawText(HDC hdcMem, LPTSTR szText, LPRECT prc, UINT dtFlags) {
+	if (!(dtFlags & DT_CALCRECT) && dwmf.IsExtended()) {
+#ifdef UNICODE
+		LPCWSTR wszText = szText;
+#else
+		WCHAR wszText[STR_SIZE];
+		MultiByteToWideChar(CP_UTF8, 0, szText, -1, wszText, STR_SIZE);
+#endif
+		UxtDrawTextOnDwmFrameOffscreen(
+			hdcMem, wszText,
+			prc->left, prc->top,
+			WIDTH_OF(*prc), HEIGHT_OF(*prc),
+			dtFlags, 10, RGB(0,0,0));
+	}
+	else {
+		DrawText(hdcMem, szText, -1, prc, dtFlags);
+	}
+}
+
 // Timespan dialog ...
 
 BOOL CALLBACK TimespanDlgProc(HWND hDlg, UINT msg, WPARAM w, LPARAM l) {
@@ -641,7 +717,7 @@ BOOL CALLBACK TimespanDlgProc(HWND hDlg, UINT msg, WPARAM w, LPARAM l) {
 BOOL dlgTimespan_OnInitDialog(HWND hDlg, HWND, LPARAM) {
 	CenterParent(hDlg, hWnd);
 	// Set default value
-	DWORD h, m, s, ms;
+	i32_t h = 0, m = 0, s = 0, ms = 0;
 	MsToMulti(timer_initial, &h, &m, &s, &ms);
 	HWND h_txtH = GetDlgItem(hDlg, TXT_H);
 	HWND h_txtM = GetDlgItem(hDlg, TXT_M);
@@ -667,23 +743,26 @@ BOOL dlgTimespan_OnCommand(HWND hDlg, int id, HWND hCtl, UINT) {
 }
 
 void dlgTimespan_OnBtnOK(HWND hDlg) {
-	int h, m, s, ms;
-	h = m = s = ms = 0;
-	if (TryParseTextbox(hDlg, TXT_H, &h) &&
-		TryParseTextbox(hDlg, TXT_M, &m) &&
-		TryParseTextbox(hDlg, TXT_S, &s) &&
-		TryParseTextbox(hDlg, TXT_MS, &ms)) {
-		timer_initial =
-			(h * 60 * 60 * 1000) +
-			(m * 60 * 1000) +
-			(s * 1000) + ms;
-		EndDialog(hDlg, TRUE);
+	i32_t h = 0, m = 0, s = 0, ms = 0;
+	LPTSTR szErrMsg = 
+		!TryParseTextOf(hDlg, TXT_H, &h) ||
+		!TryParseTextOf(hDlg, TXT_M, &m) ||
+		!TryParseTextOf(hDlg, TXT_S, &s) ||
+		!TryParseTextOf(hDlg, TXT_MS, &ms) ?
+		_T("Parse integer failed!") :
+		h < 0 || m < 0 || s < 0 || ms < 0 ?
+		_T("Please enter positive number only!") :
+		!TryMultiply(60 * 60 * 1000, &h) ||
+		!TryMultiply(60 * 1000, &m) ||
+		!TryMultiply(1000, &s) ||
+		!TryAdd(s, &ms) || !TryAdd(m, &ms) || !TryAdd(h, &ms) ?
+		_T("Integer overflow! Please enter smaller value.") : NULL;
+	if (szErrMsg) {
+		MessageBox(hDlg, szErrMsg, NULL, MB_OK | MB_ICONERROR);
+		return;
 	}
-	else {
-		MessageBox(hDlg,
-			_T("Please enter positive integer number only!"),
-			NULL, MB_OK | MB_ICONERROR);
-	}
+	timer_initial = ms;
+	EndDialog(hDlg, TRUE);
 }
 
 // Settings dialog ...
@@ -712,6 +791,7 @@ void dlgSettings_UpdateCtrl(HWND hDlg) {
 	SetDlgItemText(hDlg, TXT_SOUND, ontimeout_sound);
 	CheckDlgButton(hDlg, CHK_EXECUTE, *ontimeout_exec ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(hDlg, CHK_PLAY_SOUND, *ontimeout_sound ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(hDlg, CHK_DWM_EXTEND_FRAME, dwm_extend_frame ? BST_CHECKED : BST_UNCHECKED);
 }
 
 void dlgSettings_OnCheckBoxToggled(HWND hDlg) {
@@ -727,6 +807,8 @@ void dlgSettings_OnCheckBoxToggled(HWND hDlg) {
 	EnableWindow(h_txtSound, do_play_sound);
 	EnableWindow(h_btnBrowseSound, do_play_sound);
 	EnableWindow(h_btnTestSound, do_play_sound);
+	dwmf.DoExtend(BST_CHECKED ==
+		IsDlgButtonChecked(hDlg, CHK_DWM_EXTEND_FRAME));
 }
 
 BOOL dlgSettings_OnCommand(HWND hDlg, int id, HWND hCtl, UINT notify_code) {
@@ -736,7 +818,8 @@ BOOL dlgSettings_OnCommand(HWND hDlg, int id, HWND hCtl, UINT notify_code) {
 	case BTN_SET_FONT: dlgSettings_OnBtnSetFont(hDlg); break;
 	case BTN_SET_MINI_FONT: dlgSettings_OnBtnSetMiniFont(hDlg); break;
 	case CHK_EXECUTE:
-	case CHK_PLAY_SOUND: dlgSettings_OnCheckBoxToggled(hDlg); break;
+	case CHK_PLAY_SOUND: 
+	case CHK_DWM_EXTEND_FRAME: dlgSettings_OnCheckBoxToggled(hDlg); break;
 	case BTN_BROWSE_EXE: dlgSettings_OnBtnBrowseExe(hDlg); break;
 	case BTN_BROWSE_SOUND: dlgSettings_OnBtnBrowseSound(hDlg); break;
 	case BTN_TEST_SOUND: dlgSettings_OnBtnTestSound(hDlg); break;
@@ -753,6 +836,8 @@ void dlgSettings_OnBtnOK(HWND hDlg) {
 	else { *ontimeout_exec = '\0'; }
 	if (do_play_sound) { GetDlgItemText(hDlg, TXT_SOUND, ontimeout_sound, MAX_PATH); }
 	else { *ontimeout_sound = '\0'; }
+	dwm_extend_frame = BST_CHECKED ==
+		IsDlgButtonChecked(hDlg, CHK_DWM_EXTEND_FRAME);
 	EndDialog(hDlg, TRUE);
 }
 

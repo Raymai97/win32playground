@@ -1,0 +1,10 @@
+#ifndef _MYWINAPI_SETWINDOWFONTRECURSIVE_H
+#define _MYWINAPI_SETWINDOWFONTRECURSIVE_H
+
+#include <Windows.h>
+
+EXTERN_C
+void __stdcall
+SetWindowFontRecursive(HWND, HFONT);
+
+#endif/*_MYWINAPI_SETWINDOWFONTRECURSIVE_H*/

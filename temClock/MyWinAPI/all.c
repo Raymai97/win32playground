@@ -1,0 +1,16 @@
+#ifndef _MYWINAPI_DEVELOPER_MODE
+#include "CreateExactFont.c"
+#include "CreateCtl.c"
+#include "CenterWindow.c"
+#include "SetWindowClientSize.c"
+#include "SetWindowFontRecursive.c"
+#include "GetMonitorRect.c"
+#include "GetMonitorDpi.c"
+#include "OpenFolderAndSelectItem.c"
+#include "PidlFromPath.c"
+#include "InitComCtlEx.c"
+#include "UseExplorerTheme.c"
+#include "Dwm.c"
+#include "Uxtheme.c"
+#include "Create32bitBmp.c"
+#endif

@@ -15,20 +15,24 @@ bool MaiTimer::IsRunning()
 	return running;
 }
 
-DWORD MaiTimer::GetElapsedMsTillNow()
+i64_t MaiTimer::GetElapsedMsTillNow()
 {
 	if (t1.QuadPart == 0) { return 0; }
 	if (running) { QueryPerformanceCounter(&t2); }
-	// result might bigger than DWORD (unsigned long)
-	// but it is enough for me now
-	return (DWORD)((t2.QuadPart - t1.QuadPart) * 1000 / freq.QuadPart);
+	return (t2.QuadPart - t1.QuadPart) * 1000 / freq.QuadPart;
 }
 
-DWORD MaiTimer::GetElapsedMs()
+i64_t MaiTimer::GetElapsedMs()
 {
-	DWORD elapsed = elapsed_ms_before_paused;
+	i64_t elapsed = elapsed_ms_before_paused;
 	if (!paused) { elapsed += GetElapsedMsTillNow(); }
 	return elapsed;
+}
+
+i32_t MaiTimer::GetElapsedMs_i32()
+{
+	i64_t ret = GetElapsedMs();
+	return ret > INT_MAX ? -1 : (i32_t)ret;
 }
 
 void MaiTimer::Start()

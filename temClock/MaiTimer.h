@@ -1,20 +1,22 @@
-// Aug 14:
-// Added DWORD casting, removed 't3' as it seems useless
-
 #pragma once
 #include <Windows.h>
+#include <limits.h>
+
+typedef __int64		i64_t;
+typedef int			i32_t;
 
 class MaiTimer
 {
 	LARGE_INTEGER t1, t2, freq;
 	bool running, paused;
-	DWORD elapsed_ms_before_paused;
+	i64_t elapsed_ms_before_paused;
 
-	DWORD GetElapsedMsTillNow();
+	i64_t GetElapsedMsTillNow();
 
 public:
 	MaiTimer();
-	DWORD GetElapsedMs();
+	i64_t GetElapsedMs();
+	i32_t GetElapsedMs_i32();
 	bool IsPaused(); 
 	bool IsRunning();
 	void Start();
