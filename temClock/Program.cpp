@@ -220,9 +220,7 @@ void OnPaint(HWND hWnd) {
 	PAINTSTRUCT ps;
 	HDC real_hdc = BeginPaint(hWnd, &ps);
 	HDC hdc = CreateCompatibleDC(real_hdc);
-	HBITMAP hbm = dwmf.IsExtended() ?
-		Create32bitBmp(real_hdc, WIDTH_OF(rc), HEIGHT_OF(rc), NULL) :
-		CreateCompatibleBitmap(real_hdc, WIDTH_OF(rc), HEIGHT_OF(rc));
+	HBITMAP hbm = Create32bitBmp(hdc, WIDTH_OF(rc), HEIGHT_OF(rc), NULL);
 	HGDIOBJ old_hbm = SelectObject(hdc, hbm);
 	HGDIOBJ old_hfo = SelectObject(hdc, hFont);
 	// Clear

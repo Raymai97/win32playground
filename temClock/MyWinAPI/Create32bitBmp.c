@@ -8,7 +8,7 @@ Create32bitBmp(
 	HBITMAP hbmp = NULL;
 	void *pvBits = NULL;
 	BITMAPINFO bi = { 0 };
-	bi.bmiHeader.biSize = sizeof(bi);
+	bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	bi.bmiHeader.biPlanes = 1;
 	bi.bmiHeader.biBitCount = 32;
 	bi.bmiHeader.biCompression = BI_RGB;
